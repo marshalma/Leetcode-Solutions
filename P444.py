@@ -15,15 +15,15 @@ class Solution(object):
 			q.append(v)
 		while q:
 			n = len(q[0])
-			for i in xrange(1, n):
+			for i in xrange(1, n+1):
 				if q[0][i] not in table: continue
-				for v in table[q[0][i]]:
-					if v[-1] == org[-1] and table2[q[0][i]] + len(v) == len(org): return True
-					q.append(v)
+				thislist = table[q[0][i]]
+				if thislist[-1] == org[-1]: return True
+				q.append(thislist)
 			q.popleft()
 		return False
 		
 s = Solution()
-org = [4,1,5,2,6,3]
-seqs = [[5,2,6,3],[4,1,5,2]]
-s.sequenceReconstruction(org, seqs)
+org = [1,2,3]
+seqs = [[1,2],[2,3]]
+print s.sequenceReconstruction(org, seqs)
