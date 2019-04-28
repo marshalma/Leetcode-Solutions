@@ -1,10 +1,10 @@
-
+#include "../include/common.h"
 
 class AutocompleteSystem {
     struct Comparator {
         bool operator()(const pair<string, int> &a, const pair<string, int> &b) const{
             if (a.second == b.second) {
-                return !a.first.compare(b.first);
+                return a.first.compare(b.first);
             }
             return a.second > b.second;
         }
@@ -12,8 +12,8 @@ class AutocompleteSystem {
     
     struct Node {
         char ch;
-        map<pair<string, int>, string, Comparator> mapping;
-        unordered_map<string, map<pair<string, int>, string, Comparator>::iterator> mapping2;
+        multiset<pair<string, int>, Comparator> mapping;
+        unordered_map<string, multiset<pair<string, int>, Comparator>::iterator> mapping2;
         unordered_map<char, Node*> children;
         
         Node() {}
@@ -42,14 +42,14 @@ class AutocompleteSystem {
         insert_sentence(new_node, sentence, idx+1, times);
         
         if (a->mapping2.count(sentence) == 0) {
-            a->mapping[make_pair(sentence, times)] = sentence;
-            a->mapping2[sentence] = a->mapping.find(make_pair(sentence, times));
+            auto it = a->mapping.insert(make_pair(sentence, times));
+            a->mapping2[sentence] = it;
         } else {
-            int history = a->mapping2[sentence]->first.second;
+            int history = a->mapping2[sentence]->second;
             history += times;
             a->mapping.erase(a->mapping2[sentence]);
-            a->mapping[make_pair(sentence, history)] = sentence;
-            a->mapping2[sentence] = a->mapping.find(make_pair(sentence, times));
+            auto it = a->mapping.insert(make_pair(sentence, history));
+            a->mapping2[sentence] = it;
         }
     }
     
@@ -73,6 +73,8 @@ public:
             return {};
         }
         
+        cur_sen.push_back(c);
+        
         bool found = false;
         for (auto p: cur_node->children) {
             if (p.first == c) {
@@ -91,7 +93,7 @@ public:
             //cout << i << endl;
             if (it == mapping.end()) break;
             
-            res.push_back(it->second);
+            res.push_back(it->first);
             it++;
         }
         
@@ -104,3 +106,38 @@ public:
  * AutocompleteSystem* obj = new AutocompleteSystem(sentences, times);
  * vector<string> param_1 = obj->input(c);
  */
+
+
+int main() {
+	vector<string> input1 = {"i love you","island","iroman","i love leetcode"};
+	vector<int> input2 = {5, 3, 2, 2};
+
+	AutocompleteSystem s(input1, input2);
+	vector<string> output;
+    output = s.input('i');
+    for (auto s: output) cout << s << endl;
+	output = s.input(' ');
+    for (auto s: output) cout << s << endl;
+	output = s.input('a');
+    for (auto s: output) cout << s << endl;
+	output = s.input('#');
+    for (auto s: output) cout << s << endl;
+	output = s.input('i');
+    for (auto s: output) cout << s << endl;
+	output = s.input(' ');
+    for (auto s: output) cout << s << endl;
+	output = s.input('a');
+    for (auto s: output) cout << s << endl;
+	output = s.input('#');
+    for (auto s: output) cout << s << endl;
+	output = s.input('i');
+    for (auto s: output) cout << s << endl;
+	output = s.input(' ');
+    for (auto s: output) cout << s << endl;
+	output = s.input('a');
+    for (auto s: output) cout << s << endl;
+	output = s.input('#');
+    for (auto s: output) cout << s << endl;
+
+	return 0;
+}	
