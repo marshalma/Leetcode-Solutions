@@ -6,10 +6,11 @@ class LFUCache {
 	struct freq_node;
 	
 	struct entry_node {
+		int key;
 		int val;
 		list<freq_node>::iterator parent_iter;
 		
-		entry_node(int val): val(val) {}
+		entry_node(int key, int val): key(key), val(val) {}
 	};
 	
 	struct freq_node {
@@ -26,23 +27,27 @@ class LFUCache {
 	
 	void increment_freq(int key, int value) {
 		auto iter = mapping[key];
-		struct entry_node enode(value);
+		struct entry_node enode(key, value);
 		
 		auto parent_iter = iter->parent_iter;
 		parent_iter->entry_list.erase(iter);
 		
 		auto parent_next_iter = next(parent_iter);
-		if (parent_next_iter->freq == parent_iter->freq + 1) {
+		if (parent_next_iter->freq == parent_iter->freq + 1 && parent_next_iter != freq_list.end()) {
+			enode.parent_iter = parent_next_iter;
 			parent_next_iter->entry_list.push_back(enode);
 		} else {
 			struct freq_node fnode(parent_iter->freq + 1);
 			parent_next_iter = freq_list.insert(parent_next_iter, fnode);
+			enode.parent_iter = parent_next_iter;
 			parent_next_iter->entry_list.push_back(enode);
 		}
 		
 		if (parent_iter->entry_list.size() == 0) {
 			freq_list.erase(parent_iter);
 		}
+		
+		mapping[key] = prev(parent_next_iter->entry_list.end());
 	}
 	
 public:
@@ -67,27 +72,26 @@ public:
 	void put(int key, int value) {
 		if (capacity == 0) return;
 		
-		size++;
-		
 		if (mapping.count(key) != 0) {
 			increment_freq(key, value);
 			return;
 		}
 		
+        size++;
+        
 		while (size > capacity) {
 			// remove least frequent unit
 			auto iter = freq_list.begin()->entry_list.begin();
+            int iter_key = iter->key;
 			auto parent_iter = iter->parent_iter;
-			
 			parent_iter->entry_list.erase(iter);
 			if (parent_iter->entry_list.size() == 0) {
 				freq_list.erase(parent_iter);
 			}
-			mapping.erase(key);
+			mapping.erase(iter_key);
 			size--;
 		}
-		
-		struct entry_node enode(value);
+		struct entry_node enode(key, value);
 		if (freq_list.size() == 0 || freq_list.begin()->freq > 1) {
 			struct freq_node fnode(1);
 			freq_list.push_front(fnode);
